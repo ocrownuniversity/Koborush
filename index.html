@@ -1164,6 +1164,7 @@ textarea.form-input{resize:none}
 // After 2.8s (slightly after the 2.4s animation), always show auth screen
 // Firebase onAuthStateChanged will then redirect to home/admin if user is logged in
 window._splashTimer = setTimeout(function() {
+  if (window._firebaseNavigated) return; // Firebase already handled navigation
   var splash = document.getElementById('splash');
   var auth = document.getElementById('auth');
   if (splash && splash.classList.contains('active')) {
@@ -1196,7 +1197,7 @@ window.addEventListener('error', function(e) {
 });
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,updateProfile}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import{getFirestore,doc,setDoc,getDoc,updateDoc,collection,addDoc,query,where,orderBy,limit,getDocs,onSnapshot,serverTimestamp,increment,runTransaction,getStorage}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import{getFirestore,doc,setDoc,getDoc,updateDoc,collection,addDoc,query,where,orderBy,limit,getDocs,onSnapshot,serverTimestamp,increment,runTransaction}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import{getStorage as fbStorage,ref as storageRef,uploadString,getDownloadURL}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 const FC={apiKey:"AIzaSyCPyNhUxVqf4nl2FwgoKT26kedQr8L0E_g",authDomain:"fintech-d16e9.firebaseapp.com",projectId:"fintech-d16e9",storageBucket:"fintech-d16e9.firebasestorage.app",messagingSenderId:"500436305722",appId:"1:500436305722:web:e1e5ec4f7b6bd3c70ef203"};
@@ -1306,7 +1307,7 @@ onAuthStateChanged(auth,async(user)=>{
     if(_s.isAdmin){showScreen('admin');loadAdminDash();listenPendingFundRequests()}
     else{showScreen('home');loadHome()}
     populateProviders();loadAPIConfigs();loadCompanyAcct();
-  }else{setTimeout(()=>showScreen('auth'),2500)}
+  }else{if(window._splashTimer)clearTimeout(window._splashTimer);showScreen('auth')}
 });
 
 // USER DATA
