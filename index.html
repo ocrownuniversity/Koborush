@@ -99,7 +99,7 @@ select.form-input{cursor:pointer;-webkit-appearance:none;background-image:url("d
 
 /* ── HOME ── */
 #home{padding-bottom:90px}
-.home-header{background:linear-gradient(145deg,#1E1B4B 0%,#3B3582 100%);padding:50px 16px 78px;position:relative;overflow:hidden}
+.home-header{background:linear-gradient(145deg,#1E1B4B 0%,#3B3582 100%);padding:50px 16px 90px;position:relative;overflow:hidden}
 .home-header::before{content:'';position:absolute;top:-40%;right:-20%;width:220px;height:220px;background:radial-gradient(circle,rgba(123,117,201,.15) 0%,transparent 70%);border-radius:50%}
 .home-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;position:relative;z-index:1}
 .home-user{display:flex;align-items:center;gap:10px}
@@ -120,7 +120,7 @@ select.form-input{cursor:pointer;-webkit-appearance:none;background-image:url("d
 .balance-stat-val.green{color:#34D399}
 .balance-stat-val.red{color:#F87171}
 .eye-toggle{cursor:pointer;opacity:.6;font-size:13px}
-.home-content{padding:0 12px;margin-top:-50px;position:relative;z-index:2}
+.home-content{padding:0 12px;margin-top:-62px;position:relative;z-index:2}
 .quick-actions{background:white;border-radius:18px;padding:15px;box-shadow:var(--shadow);margin-bottom:12px}
 .section-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:11px;font-family:var(--font-display)}
 .actions-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -552,10 +552,12 @@ textarea.form-input{resize:none}
         <div style="flex:1;text-align:center;font-size:9px;color:var(--text3);font-weight:500">Sun</div>
       </div>
     </div>
+    <div class="refer-strip" onclick="navigateTo('referral')">
+      <div><h4>Refer &amp; Earn 💸</h4><p>Earn ₦500 for every friend who joins KOBOrush</p></div>
+      <div class="refer-strip-arrow">›</div>
+    </div>
   </div>
 </div>
-
-<!-- ══ WALLET ══ -->
 <div class="screen" id="walletScreen">
   <div class="wallet-header">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding-top:42px">
@@ -1346,7 +1348,7 @@ function updateUI(){
 }
 window.toggleBal=()=>{_s.balHidden=!_s.balHidden;document.getElementById('homeBalVal').textContent=_s.balHidden?'••••••':Number(_s.userData?.balance||0).toLocaleString('en-NG',{minimumFractionDigits:2});document.getElementById('balEye').textContent=_s.balHidden?'🙈':'👁'};
 async function loadHome(){if(!_s.user)return;listenUD(_s.user.uid);loadRecentTx()}
-async function loadRecentTx(){if(!_s.user)return;try{const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),orderBy('createdAt','desc'),limit(5));const s=await getDocs(q);const c=document.getElementById('recentTx');c.innerHTML=s.empty?`<div class="empty-state"><div class="empty-icon">💳</div><h4>No transactions yet</h4><p>Fund your wallet to get started</p></div>`:s.docs.map(d=>txHTML(d.data())).join('')}catch(e){console.error(e)}}
+async function loadRecentTx(){if(!_s.user)return;const c=document.getElementById('recentTx');try{const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),orderBy('createdAt','desc'),limit(5));const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000));const s=await Promise.race([getDocs(q),timeout]);c.innerHTML=s.empty?`<div class="empty-state"><div class="empty-icon">💳</div><h4>No transactions yet</h4><p>Fund your wallet to get started</p></div>`:s.docs.map(d=>txHTML(d.data())).join('')}catch(e){c.innerHTML='<div class="empty-state"><div class="empty-icon">💳</div><h4>No transactions yet</h4><p>Fund your wallet to get started</p></div>'}}
 
 function txHTML(tx){
   const ic=['fund','referral_bonus','admin_credit','fund_approved'].includes(tx.type);
@@ -1355,7 +1357,7 @@ function txHTML(tx){
   const s=csym(_s.userData?.country||'NG');
   return`<div class="tx-item"><div class="tx-icon" style="background:${bg[tx.type]||'#F8FAFC'}">${icons[tx.type]||'💳'}</div><div class="tx-info"><div class="tx-name">${tx.description||tx.type}</div><div class="tx-meta">${tAgo(tx.createdAt)} · <span class="badge badge-${tx.status==='success'?'success':tx.status==='pending'?'pending':tx.status==='review'?'review':'failed'}">${tx.status}</span></div></div><div class="tx-amt"><div class="tx-amt-val ${ic?'cr':'dr'}">${ic?'+':'-'}${fmt(tx.amount,s)}</div></div></div>`;
 }
-async function loadWallet(){updateUI();try{const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),orderBy('createdAt','desc'),limit(10));const s=await getDocs(q);document.getElementById('walletTx').innerHTML=s.empty?`<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>No transactions yet</p></div>`:s.docs.map(d=>txHTML(d.data())).join('')}catch(e){}}
+async function loadWallet(){updateUI();try{const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),orderBy('createdAt','desc'),limit(10));const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000));const s=await Promise.race([getDocs(q),timeout]);document.getElementById('walletTx').innerHTML=s.empty?`<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>No transactions yet</p></div>`:s.docs.map(d=>txHTML(d.data())).join('')}catch(e){document.getElementById('walletTx').innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>No transactions yet</p></div>'}}
 window.loadHist=async(f='all')=>{if(!_s.user)return;document.getElementById('histList').innerHTML='<div class="loading-spinner"></div>';try{const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),orderBy('createdAt','desc'),limit(50));const s=await getDocs(q);_s.allTx=s.docs.map(d=>({id:d.id,...d.data()}));renderHist(_s.allTx,f)}catch(e){document.getElementById('histList').innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><h4>No history</h4></div>'}};
 function renderHist(txs,f){const c=document.getElementById('histList');const fl=f==='all'?txs:txs.filter(t=>t.type===f);c.innerHTML=fl.length?`<div class="card" style="padding:0;overflow:hidden">${fl.map(t=>txHTML(t)).join('')}</div>`:`<div class="empty-state"><div class="empty-icon">🔍</div><h4>No ${f} transactions</h4></div>`}
 window.filterHist=(f,el)=>{document.querySelectorAll('#histFilter .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderHist(_s.allTx,f)};
