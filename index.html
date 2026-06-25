@@ -1468,90 +1468,9 @@ function txHTML(tx){
   const s=csym(_s.userData?.country||'NG');
   return`<div class="tx-item"><div class="tx-icon" style="background:${bg[tx.type]||'#F8FAFC'}">${icons[tx.type]||'💳'}</div><div class="tx-info"><div class="tx-name">${tx.description||tx.type}</div><div class="tx-meta">${tAgo(tx.createdAt)} · <span class="badge badge-${tx.status==='success'?'success':tx.status==='pending'?'pending':tx.status==='review'?'review':'failed'}">${tx.status}</span></div></div><div class="tx-amt"><div class="tx-amt-val ${ic?'cr':'dr'}">${ic?'+':'-'}${fmt(tx.amount,s)}</div></div></div>`;
 }
-async function loadWallet(){updateUI();try{const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),orderBy('createdAt','desc'),limit(10));const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000));const s=await Promise.race([getDocs(q),timeout]);document.getElementById('walletTx').innerHTML=s.empty?`<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>No transactions yet</p></div>`:s.docs.map(d=>txHTML(d.data())).join('')}catch(e){document.getElementById('walletTx').innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>No transactions yet</p></div>'}}
-window.loadHist=async(f='all')=>{if(!_s.user)return;document.getElementById('histList').innerHTML='<div class="loading-spinner"></div>';try{const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),orderBy('createdAt','desc'),limit(50));const s=await getDocs(q);_s.allTx=s.docs.map(d=>({id:d.id,...d.data()}));renderHist(_s.allTx,f)}catch(e){document.getElementById('histList').innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><h4>No history</h4></div>'}};
-function renderHist(txs,f){const c=document.getElementById('histList');const fl=f==='all'?txs:txs.filter(t=>t.type===f);c.innerHTML=fl.length?`<div class="card" style="padding:0;overflow:hidden">${fl.map(t=>txHTML(t)).join('')}</div>`:`<div class="empty-state"><div class="empty-icon">🔍</div><h4>No ${f} transactions</h4></div>`}
-window.filterHist=(f,el)=>{document.querySelectorAll('#histFilter .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderHist(_s.allTx,f)};
-async function addNotif(uid,title,text,type='info'){await addDoc(collection(db,'notifications'),{userId:uid,title,text,type,read:false,createdAt:serverTimestamp()})}
-window.loadNotifs=async()=>{if(!_s.user)return;document.getElementById('notifList').innerHTML='<div class="loading-spinner"></div>';const q=query(collection(db,'notifications'),where('userId','==',_s.user.uid),orderBy('createdAt','desc'),limit(30));const s=await getDocs(q);const ic={success:'✅',info:'ℹ️',promo:'🎉',warning:'⚠️'};const bg={success:'#E0FDF4',info:'var(--primary-light)',promo:'#F5F3FF',warning:'#FEFCE8'};document.getElementById('notifList').innerHTML=s.empty?`<div class="empty-state"><div class="empty-icon">🔔</div><h4>No notifications</h4></div>`:s.docs.map(d=>{const n=d.data();return`<div class="notif-item ${n.read?'':'unread'}" onclick="markRead('${d.id}',this)"><div class="notif-item-icon" style="background:${bg[n.type]||'#F8FAFC'}">${ic[n.type]||'🔔'}</div><div class="notif-item-body"><div class="notif-item-title">${n.title}</div><div class="notif-item-text">${n.text}</div><div class="notif-item-time">${tAgo(n.createdAt)}</div></div></div>`}).join('')};
-window.markRead=async(id,el)=>{el.classList.remove('unread');await updateDoc(doc(db,'notifications',id),{read:true})};
-window.markAllRead=async()=>{if(!_s.user)return;const q=query(collection(db,'notifications'),where('userId','==',_s.user.uid),where('read','==',false));const s=await getDocs(q);s.forEach(d=>updateDoc(doc(db,'notifications',d.id),{read:true}));document.getElementById('notifDot').style.display='none';loadNotifs()};
-
-// ══ FUND WALLET – 3-STEP PROCESS ══
-window.resetFundWallet=()=>{
-  _s.fundStep=1;_s.proofFile=null;_s.proofDataURL=null;
-  document.getElementById('fundStep1').classList.remove('hidden');
-  document.getElementById('fundStep2').classList.add('hidden');
-  document.getElementById('fundStep3').classList.add('hidden');
-  document.getElementById('fsc1').className='fund-step-circle active';
-  document.getElementById('fsc2').className='fund-step-circle';
-  document.getElementById('fsc3').className='fund-step-circle';
-  document.getElementById('fsl1').className='fund-step-line';
-  document.getElementById('fsl2').className='fund-step-line';
-  document.getElementById('uploadArea').classList.remove('has-file');
-  document.getElementById('uploadPreview').style.display='none';
-  document.getElementById('uploadFileName').style.display='none';
-  document.getElementById('proofFileInput').value='';
-};
-window.switchFundTab=(tab)=>{
-  const isManual=tab==='manual';
-  document.getElementById('fundTabManual').style.display=isManual?'block':'none';
-  document.getElementById('fundTabPaystack').style.display=isManual?'none':'block';
-  document.getElementById('tabManual').style.background=isManual?'var(--primary)':'white';
-  document.getElementById('tabManual').style.color=isManual?'white':'var(--text)';
-  document.getElementById('tabManual').style.border=isManual?'none':'2px solid var(--border)';
-  document.getElementById('tabPaystack').style.background=isManual?'white':'var(--primary)';
-  document.getElementById('tabPaystack').style.color=isManual?'var(--text)':'white';
-  document.getElementById('tabPaystack').style.border=isManual?'2px solid var(--border)':'none';
-  if(!isManual)checkPaystackKey();
-};
-async function checkPaystackKey(){
-  const el=document.getElementById('paystackKeyStatus');
-  if(!el)return;
-  try{
-    const s=await getDoc(doc(db,'settings','apis'));
-    const key=s.exists()?s.data().paystackPublic||s.data().paystackPub||'':'';
-    if(key&&key.startsWith('pk_')){
-      el.innerHTML='<span style="color:var(--success-green)">✅ Paystack gateway ready</span>';
-      window._paystackKey=key;
-    }else{
-      el.innerHTML='<span style="color:var(--danger)">⚠️ Paystack not configured. Use manual transfer.</span>';
-    }
-  }catch(e){el.textContent='Could not load gateway status';}
-}
-window.initPaystackPayment=async()=>{
-  const amount=parseFloat(document.getElementById('paystackAmount').value)||0;
-  if(amount<100)return showToast('error','Minimum amount is ₦100');
-  if(!window._paystackKey){await checkPaystackKey();}
-  if(!window._paystackKey||!window._paystackKey.startsWith('pk_'))return showToast('error','Paystack is not configured. Please use manual transfer.');
-  const email=_s.userData?.email;
-  if(!email)return showToast('error','Please log in again');
-  // Load Paystack SDK if not already loaded
-  if(!window.PaystackPop){
-    await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://js.paystack.co/v1/inline.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
-  }
-  const handler=window.PaystackPop.setup({
-    key:window._paystackKey,
-    email,
-    amount:amount*100, // kobo
-    currency:'NGN',
-    ref:'KBR_'+Date.now()+'_'+genId(6),
-    metadata:{userId:_s.user.uid,userName:(_s.userData?.firstName||'')+' '+(_s.userData?.lastName||'')},
-    callback:async(response)=>{
-      // Payment successful — credit wallet
-      try{
-        await updateDoc(doc(db,'users',_s.user.uid),{balance:increment(amount),totalFunded:increment(amount)});
-        const txId=genId(12);
-        await setDoc(doc(db,'transactions',txId),{id:txId,userId:_s.user.uid,type:'fund_approved',status:'success',amount,description:'Wallet Funded via Paystack',reference:response.reference,createdAt:serverTimestamp()});
-        await addNotif(_s.user.uid,'✅ Wallet Funded!','₦'+amount.toLocaleString()+' added via Paystack (Ref: '+response.reference+')','success');
-        showToast('success','₦'+amount.toLocaleString()+' added to your wallet!');
-        navigateTo('home');
-      }catch(e){showToast('error','Payment received but credit failed. Contact support with ref: '+response.reference);}
-    },
-    onClose:()=>{showToast('info','Payment cancelled');}
-  });
-  handler.openIframe();
-};
+async function loadWallet(){updateUI();const el=document.getElementById('walletTx');el.innerHTML='<div class="loading-spinner"></div>';try{const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),limit(10));const s=await getDocs(q);const txs=s.docs.map(d=>d.data()).sort((a,b)=>{const ta=a.createdAt?.toMillis?a.createdAt.toMillis():0;const tb=b.createdAt?.toMillis?b.createdAt.toMillis():0;return tb-ta;});el.innerHTML=txs.length?txs.map(d=>txHTML(d)).join(''):'<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>No transactions yet</p></div>';}catch(e){el.innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>Error loading transactions</p></div>';}};
+async function checkPaystackKey(){const el=document.getElementById('paystackKeyStatus');if(!el)return;if(window._paystackKey&&window._paystackKey.startsWith('pk_')){el.innerHTML='<span style="color:var(--success-green)">✅ Paystack gateway ready</span>';return;}try{const snap=await getDoc(doc(db,'settings','apis'));const a=snap.exists()?snap.data():{};const key=a.paystackPub||a.paystackPublic||'';if(key&&key.startsWith('pk_')){window._paystackKey=key;el.innerHTML='<span style="color:var(--success-green)">✅ Paystack gateway ready</span>';}else{el.innerHTML='<span style="color:var(--danger)">⚠ Paystack key not set. Admin → API Management</span>';}}catch(e){el.innerHTML='<span style="color:var(--danger)">Gateway error</span>';}}
+window.initPaystackPayment=async()=>{const amount=parseFloat(document.getElementById('paystackAmount').value)||0;if(amount<100)return showToast('error','Minimum ₦100');if(!window._paystackKey||!window._paystackKey.startsWith('pk_')){await checkPaystackKey();}if(!window._paystackKey||!window._paystackKey.startsWith('pk_')){return showToast('error','Paystack not set up. Use Manual Transfer or contact admin.');}const email=_s.userData?.email;if(!email)return showToast('error','Please log in again');const ref='KBR'+Date.now()+genId(6);if(!window.PaystackPop){try{await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://js.paystack.co/v1/inline.js';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});}catch(e){return showToast('error','Could not load Paystack. Check internet.');}}const onSuccess=async(reference)=>{showToast('info','Processing payment...');try{await updateDoc(doc(db,'users',_s.user.uid),{balance:increment(amount),totalFunded:increment(amount)});const txId=genId(12);await setDoc(doc(db,'transactions',txId),{id:txId,userId:_s.user.uid,type:'fund_approved',status:'success',amount,description:'Wallet Funded via Paystack',reference:reference,createdAt:serverTimestamp()});addNotif(_s.user.uid,'✅ Wallet Funded!','₦'+amount.toLocaleString()+' via Paystack','success').catch(()=>{});showToast('success','₦'+amount.toLocaleString()+' added to your wallet!');navigateTo('home');}catch(e){showToast('error','Payment done but credit failed. Ref: '+reference);}};try{const handler=window.PaystackPop.setup({key:window._paystackKey,email,amount:Math.round(amount*100),currency:'NGN',ref,channels:['card','bank','ussd','qr','mobile_money','bank_transfer'],callback:(resp)=>{onSuccess(resp.reference||ref);},onClose:()=>{showToast('info','Payment window closed');}});handler.openIframe();}catch(e){showToast('error','Paystack error: '+e.message);console.error(e);}};
 
 
 window.goToFundStep2=()=>{
@@ -1870,10 +1789,10 @@ window.promoteUser=async(id)=>{const lv=['standard','bronze','silver','gold'];co
 window.loadAdminTxs=async()=>{document.getElementById('adminTxList').innerHTML='<div class="loading-spinner"></div>';const q=query(collection(db,'transactions'),orderBy('createdAt','desc'),limit(50));const s=await getDocs(q);const txs=s.docs.map(d=>({id:d.id,...d.data()}));document.getElementById('adminTxList').innerHTML=txs.length?`<div class="admin-panel" style="margin:0">${txs.map(tx=>`<div class="admin-table-row"><div class="row-main"><div class="row-title">${tx.description||tx.type}</div><div class="row-sub">${tAgo(tx.createdAt)}</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:${['fund','fund_approved','admin_credit'].includes(tx.type)?'var(--success-green)':'var(--danger)'}">₦${(tx.amount||0).toLocaleString()}</div><span class="badge badge-${tx.status==='success'?'success':tx.status==='pending'?'pending':'failed'}">${tx.status}</span></div></div>`).join('')}</div>`:'<div class="empty-state"><p>No transactions</p></div>'};
 window.filterAdminTx=(f,el)=>{document.querySelectorAll('#adminTransactions .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active')};
 window.loadAdminAgents=async()=>{const c=document.getElementById('adminAgentsList');const q=query(collection(db,'users'),where('role','==','agent'));const s=await getDocs(q);c.innerHTML=s.empty?'<div class="empty-state"><div class="empty-icon">🏪</div><h4>No agents yet</h4></div>':`<div class="admin-panel" style="margin:0">${s.docs.map(d=>{const u=d.data();return`<div class="user-row"><div class="avatar" style="width:30px;height:30px;font-size:11px">${(u.firstName?.[0]||'?')+(u.lastName?.[0]||'')}</div><div class="user-row-info"><div class="user-row-name">${u.firstName} ${u.lastName}</div><div class="user-row-meta">Level: ${u.agentLevel} · Comm: ₦${(u.agentCommission||0).toLocaleString()}</div></div><span class="badge badge-success">${u.agentLevel}</span></div>`}).join('')}</div>`};
-async function loadAPIConfigs(){try{const s=await getDoc(doc(db,'settings','apis'));if(s.exists()){const a=s.data();['ckUser','ckToken','ckURL','paystackPub','paystackSec','opayMerchant'].forEach(id=>{const el=document.getElementById(id);if(el&&a[id.replace('ck','ck')])el.value=a[id]||''})}}catch(e){}}
+async function loadAPIConfigs(){try{const snap=await getDoc(doc(db,'settings','apis'));if(snap.exists()){const a=snap.data();['ckUser','ckToken','ckURL'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=a[id]||'';});const pub=a.paystackPub||a.paystackPublic||'';const sec=a.paystackSec||a.paystackSecret||'';const pe=document.getElementById('paystackPub');if(pe)pe.value=pub;const se=document.getElementById('paystackSec');if(se)se.value=sec;const en=document.getElementById('paystackEnabled');if(en)en.checked=a.paystackEnabled!==false;if(pub&&pub.startsWith('pk_'))window._paystackKey=pub;}}catch(e){console.error('loadAPIConfigs:',e);}}
 window.loadAPISettings=async()=>{await loadAPIConfigs();loadVTU()};
 async function loadVTU(){const el=document.getElementById('vtuList');if(!el)return;try{const s=await getDocs(collection(db,'vtuProviders'));el.innerHTML=s.empty?'<p style="font-size:11px;color:var(--text3);padding:5px 0">No additional providers added.</p>':s.docs.map(d=>{const p=d.data();return`<div class="admin-panel" style="margin:0 0 7px"><div class="admin-table-row"><div class="row-main"><div class="row-title">${p.name}</div><div class="row-sub">${p.url}</div></div><label class="toggle-switch"><input type="checkbox" ${p.enabled?'checked':''} onchange="toggleVTU('${d.id}',this.checked)"><div class="toggle-slider"></div></label></div></div>`}).join('')}catch(e){}}
-window.saveAPISettings=async()=>{const s={ckUser:document.getElementById('ckUser')?.value||'',ckToken:document.getElementById('ckToken')?.value||'',ckURL:document.getElementById('ckURL')?.value||'',ckEnabled:document.getElementById('ckEnabled')?.checked,paystackPublic:document.getElementById('paystackPub')?.value||'',paystackSecret:document.getElementById('paystackSec')?.value||'',paystackEnabled:document.getElementById('paystackEnabled')?.checked,updatedAt:serverTimestamp()};await setDoc(doc(db,'settings','apis'),s,{merge:true});showToast('success','API settings saved!')};
+window.saveAPISettings=async()=>{const pub=document.getElementById('paystackPub')?.value||'';const sec=document.getElementById('paystackSec')?.value||'';const s={ckUser:document.getElementById('ckUser')?.value||'',ckToken:document.getElementById('ckToken')?.value||'',ckURL:document.getElementById('ckURL')?.value||'',ckEnabled:document.getElementById('ckEnabled')?.checked,paystackPub:pub,paystackPublic:pub,paystackSec:sec,paystackSecret:sec,paystackEnabled:document.getElementById('paystackEnabled')?.checked,updatedAt:serverTimestamp()};await setDoc(doc(db,'settings','apis'),s,{merge:true});if(pub&&pub.startsWith('pk_'))window._paystackKey=pub;showToast('success','Settings saved! Paystack ready.');};
 window.showAddAPISheet=()=>showOverlay(`<div class="sheet-title">Add VTU Provider</div><div class="api-field"><label class="api-label">Name</label><input class="api-input" id="newPN" placeholder="Provider Name"></div><div class="api-field"><label class="api-label">API URL</label><input class="api-input" id="newPU" placeholder="https://api.provider.com/"></div><div class="api-field"><label class="api-label">API Key</label><input class="api-input" id="newPK" type="password" placeholder="API key"></div><button class="btn btn-primary" style="margin-top:12px" onclick="saveNewProvider()">Add Provider</button>`);
 window.saveNewProvider=async()=>{const n=document.getElementById('newPN').value;const u=document.getElementById('newPU').value;const k=document.getElementById('newPK').value;if(!n||!u)return showToast('error','Fill required fields');await addDoc(collection(db,'vtuProviders'),{name:n,url:u,apiKey:k,enabled:true,createdAt:serverTimestamp()});showToast('success','Provider added!');closeOverlay();loadVTU()};
 window.toggleVTU=async(id,e)=>{await updateDoc(doc(db,'vtuProviders',id),{enabled:e});showToast(e?'success':'info',`Provider ${e?'enabled':'disabled'}`)};
