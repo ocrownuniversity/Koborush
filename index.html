@@ -1156,7 +1156,44 @@ textarea.form-input{resize:none}
 
 </div>
 
+
+<!-- SPLASH FALLBACK: Ensure splash never gets stuck -->
+<script>
+  // Hard failsafe: if still on splash after 5s, force show auth screen
+  // GUARANTEED splash transition:
+// After 2.8s (slightly after the 2.4s animation), always show auth screen
+// Firebase onAuthStateChanged will then redirect to home/admin if user is logged in
+window._splashTimer = setTimeout(function() {
+  var splash = document.getElementById('splash');
+  var auth = document.getElementById('auth');
+  if (splash && splash.classList.contains('active')) {
+    splash.style.opacity = '0';
+    splash.style.transition = 'opacity 0.3s';
+    setTimeout(function() {
+      splash.classList.remove('active');
+      if (auth && !window._firebaseNavigated) {
+        auth.classList.add('active');
+      }
+    }, 300);
+  }
+}, 2800);
+
+  // DOM ready tracking
+  document.addEventListener('DOMContentLoaded', function() { window._domReady = true; });
+</script>
+
 <script type="module">
+// Catch any module-level errors
+window.addEventListener('error', function(e) {
+  console.error('App error:', e);
+  // If splash is still showing, go to auth
+  var splash = document.getElementById('splash');
+  if (splash && splash.classList.contains('active')) {
+    splash.classList.remove('active');
+    var auth = document.getElementById('auth');
+    if(auth) auth.classList.add('active');
+  }
+});
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,updateProfile}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import{getFirestore,doc,setDoc,getDoc,updateDoc,collection,addDoc,query,where,orderBy,limit,getDocs,onSnapshot,serverTimestamp,increment,runTransaction,getStorage}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -1204,7 +1241,7 @@ window.navigateTo=(id)=>{
 window.goBack=()=>{const cur=document.querySelector('.screen.active');if(cur)cur.classList.remove('active');const prev=_s.navHist.pop()||'home';const el=document.getElementById(prev);if(el)el.classList.add('active');updateNav(prev)};
 window.switchTab=(id,el)=>{_s.navHist=[];const cur=document.querySelector('.screen.active');if(cur)cur.classList.remove('active');document.getElementById(id).classList.add('active');updateNav(id);if(id==='historyScreen')loadHist();if(id==='walletScreen')loadWallet();if(id==='servicesScreen')populateProviders()};
 function updateNav(id){document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.screen===id))}
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function showScreen(id){if(window._splashTimer)clearTimeout(window._splashTimer);document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active')}
 
 // AUTH
 window.switchAuthTab=(tab)=>{
@@ -1259,6 +1296,9 @@ window.sendReset=async()=>{try{await sendPasswordResetEmail(auth,document.getEle
 window.handleLogout=async()=>{await signOut(auth);_s.user=null;_s.userData=null;document.getElementById('bottomNav').style.display='none';showScreen('auth');showToast('info','Signed out')};
 
 onAuthStateChanged(auth,async(user)=>{
+  window._firebaseReady = true;
+  window._firebaseNavigated = true;
+  if(window._splashTimer) clearTimeout(window._splashTimer);
   if(user){
     _s.user=user;setBtnLoading('loginBtn',false,'Sign In');
     await loadUD(user.uid);
