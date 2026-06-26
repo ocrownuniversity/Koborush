@@ -35,12 +35,13 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:#1E1B4B
 .splash-bar{width:54px;height:3px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;margin-top:18px}
 .splash-bar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--primary-mid),var(--accent));border-radius:99px;animation:loadbar 2.4s ease forwards}
 @keyframes loadbar{to{width:100%}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 
 /* ── AUTH ── */
 #auth{background:#fff;overflow-y:auto}
-#home,#walletScreen,#profileScreen,#admin,#fundWallet,#adminFundingRequests,#airtimeScreen,#dataScreen,#electricityScreen,#cableTVScreen,#schoolPinScreen,#transferScreen,#historyScreen,#notifications,#referral,#agentScreen,#securityScreen,#supportScreen,#editProfile,#pinScreen,#successScreen,#adminTransactions,#adminAPIs,#adminUsers,#adminWallets{background:var(--bg)}
+#home,#walletScreen,#profileScreen,#admin,#fundWallet,#adminFundingRequests,#airtimeScreen,#dataScreen,#electricityScreen,#cableTVScreen,#schoolPinScreen,#transferScreen,#historyScreen,#notifications,#referral,#agentScreen,#securityScreen,#supportScreen,#editProfile,#pinScreen,#successScreen,#adminTransactions,#adminAPIs,#adminUsers,#adminWallets,#termsScreen,#adminTerms,#adminSecurity{background:var(--bg)}
 /* All non-splash/auth screens get grey background */
-#home,#walletScreen,#servicesScreen,#profileScreen,#admin,#fundWallet,#adminFundingRequests,#airtimeScreen,#dataScreen,#electricityScreen,#cableTVScreen,#schoolPinScreen,#transferScreen,#historyScreen,#notifications,#referral,#agentScreen,#securityScreen,#supportScreen,#editProfile,#adminTransactions,#adminAPIs,#adminServices,#adminPricing,#adminCountries,#adminNotifications,#adminWallets,#adminAgents,#adminUsers,#pinScreen,#successScreen{background:var(--bg)}
+#home,#walletScreen,#servicesScreen,#profileScreen,#admin,#fundWallet,#adminFundingRequests,#airtimeScreen,#dataScreen,#electricityScreen,#cableTVScreen,#schoolPinScreen,#transferScreen,#historyScreen,#notifications,#referral,#agentScreen,#securityScreen,#supportScreen,#editProfile,#adminTransactions,#adminAPIs,#adminServices,#adminPricing,#adminCountries,#adminNotifications,#adminWallets,#adminAgents,#adminUsers,#pinScreen,#successScreen,#termsScreen,#adminTerms,#adminSecurity{background:var(--bg)}
 .auth-logo-bar{background:linear-gradient(145deg,#1E1B4B,#3B3582);padding:44px 24px 26px;display:flex;flex-direction:column;align-items:center;gap:10px}
 .auth-logo-box{width:68px;height:68px;background:white;border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.25);padding:6px}
 .auth-logo-box img{width:100%;height:100%;object-fit:contain}
@@ -277,6 +278,24 @@ select.form-input{cursor:pointer;-webkit-appearance:none;background-image:url("d
 .menu-item-arrow{color:var(--text3);font-size:13px}
 .version-tag{text-align:center;font-size:11px;color:var(--text3);padding:9px;margin-bottom:90px}
 
+/* ── ADMIN PIN GATE ── */
+#adminPINGate{background:linear-gradient(155deg,#1E1B4B 0%,#2C2665 60%,#1E1B4B 100%);align-items:center;justify-content:center}
+.pin-gate-wrap{width:100%;max-width:320px;padding:32px 24px;text-align:center}
+.pin-gate-icon{width:72px;height:72px;background:rgba(255,255,255,.1);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 18px}
+.pin-gate-title{font-family:var(--font-display);font-size:20px;font-weight:700;color:white;margin-bottom:6px}
+.pin-gate-sub{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:24px;line-height:1.5}
+.pin-gate-error{font-size:12px;color:#F87171;margin-top:10px;min-height:18px}
+.pin-gate-hint{font-size:11px;color:rgba(255,255,255,.35);margin-top:14px;cursor:pointer}
+
+/* ── TERMS & CONDITIONS ── */
+#termsScreen{background:var(--bg)}
+#adminTerms{background:var(--bg)}
+.terms-editor-wrap{padding:12px}
+.terms-editor{width:100%;min-height:320px;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-family:var(--font);font-size:13px;color:var(--text);line-height:1.7;resize:vertical;background:white;outline:none;transition:border-color .2s}
+.terms-editor:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,53,130,.08)}
+.terms-content{padding:16px 14px;font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.terms-last-updated{font-size:11px;color:var(--text3);padding:0 14px 10px;font-style:italic}
+
 /* ── ADMIN ── */
 #admin{padding-bottom:20px}
 .admin-header{background:linear-gradient(145deg,#1E1B4B,#3B3582);padding:48px 14px 18px}
@@ -487,7 +506,7 @@ textarea.form-input{resize:none}
       <div style="background:#F5F5F5;padding:10px 0 10px 14px;margin:4px -14px 13px;font-size:12px;font-weight:700;color:var(--text);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">Set Password</div>
       <div class="form-group"><label class="form-label">Password</label><div class="input-icon-wrap"><input type="password" class="form-input" id="regPassword" placeholder="Minimum 8 characters"><button class="toggle-pw" onclick="togglePw('regPassword',this)">👁</button></div></div>
       <div class="form-group"><label class="form-label">Confirm Password</label><input type="password" class="form-input" id="regConfirm" placeholder="Repeat password"></div>
-      <div class="check-row"><input type="checkbox" id="termsCheck"><label for="termsCheck">I agree to the <a>Privacy Policy</a> and <a>Terms of Service</a></label></div>
+      <div class="check-row"><input type="checkbox" id="termsCheck"><label for="termsCheck">I agree to the <a style="cursor:pointer" onclick="navigateTo('termsScreen')">Privacy Policy</a> and <a style="cursor:pointer" onclick="navigateTo('termsScreen')">Terms of Service</a></label></div>
       <button class="btn-register" id="registerBtn" onclick="handleRegister()">Create Account</button>
       <div class="login-footer" style="margin-top:12px">Already have an account? <span onclick="switchAuthTab('login')">Sign In</span></div>
     </div>
@@ -704,6 +723,8 @@ textarea.form-input{resize:none}
     <div class="admin-nav-card" onclick="navigateTo('adminAPIs')"><div class="anc-icon">🔌</div><div class="anc-label">APIs</div></div>
     <div class="admin-nav-card" onclick="navigateTo('adminPricing')"><div class="anc-icon">💲</div><div class="anc-label">Pricing</div></div>
     <div class="admin-nav-card" onclick="navigateTo('adminNotifications')"><div class="anc-icon">📢</div><div class="anc-label">Notify</div></div>
+    <div class="admin-nav-card" onclick="navigateTo('adminTerms')"><div class="anc-icon">📄</div><div class="anc-label">Terms</div></div>
+    <div class="admin-nav-card" onclick="navigateTo('adminSecurity')"><div class="anc-icon">🔐</div><div class="anc-label">Security</div></div>
   </div>
   <div class="admin-panel"><div class="admin-panel-header"><h4>Recent Users</h4><span style="font-size:11px;color:var(--primary);font-weight:700;cursor:pointer" onclick="navigateTo('adminUsers')">See all</span></div><div id="adminUsersList"><div class="loading-spinner"></div></div></div>
   <div class="admin-panel"><div class="admin-panel-header"><h4>API Status</h4><span style="font-size:11px;color:var(--primary);font-weight:700;cursor:pointer" onclick="navigateTo('adminAPIs')">Manage</span></div><div id="adminAPIStatus"></div></div>
@@ -1039,8 +1060,95 @@ textarea.form-input{resize:none}
   <div style="padding:12px">
     <div class="card" style="margin-bottom:12px">
       <div class="section-title">Contact Us</div>
-      <div class="menu-item" style="padding:0 0 9px;border:none" onclick="window.location='mailto:support@koborush.com'"><div class="menu-item-icon" style="background:var(--primary-light)">✉</div><div class="menu-item-text"><div class="menu-item-title">Email Support</div><div class="menu-item-sub">support@koborush.com</div></div></div>
-      <div class="menu-item" style="padding:0;border:none" onclick="showToast('info','Opening WhatsApp...')"><div class="menu-item-icon" style="background:#E0FDF4">💬</div><div class="menu-item-text"><div class="menu-item-title">WhatsApp Chat</div><div class="menu-item-sub">8am – 10pm daily</div></div></div>
+      <div class="menu-item" style="padding:0 0 9px;border:none" onclick="window.location='mailto:info@koborush.ng'"><div class="menu-item-icon" style="background:var(--primary-light)">✉</div><div class="menu-item-text"><div class="menu-item-title">Email Support</div><div class="menu-item-sub">info@koborush.ng</div></div></div>
+      <div class="menu-item" style="padding:0 0 9px;border:none" onclick="window.location='tel:07080951392'"><div class="menu-item-icon" style="background:#E0FDF4">📞</div><div class="menu-item-text"><div class="menu-item-title">Phone Support</div><div class="menu-item-sub">07080951392</div></div></div>
+      <div class="menu-item" style="padding:0;border:none" onclick="window.open('https://wa.me/2347080951392','_blank')"><div class="menu-item-icon" style="background:#E0FDF4">💬</div><div class="menu-item-text"><div class="menu-item-title">WhatsApp Chat</div><div class="menu-item-sub">8am – 10pm daily</div></div></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Legal</div>
+      <div class="menu-item" style="padding:0;border:none" onclick="navigateTo('termsScreen')"><div class="menu-item-icon" style="background:#FEFCE8">📄</div><div class="menu-item-text"><div class="menu-item-title">Terms & Conditions</div><div class="menu-item-sub">Read our terms of service</div></div><div class="menu-item-arrow">›</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN PIN GATE ══ -->
+<div class="screen" id="adminPINGate">
+  <div class="pin-gate-wrap">
+    <div class="pin-gate-icon">🔐</div>
+    <div class="pin-gate-title">Admin Verification</div>
+    <div class="pin-gate-sub">Enter your 4-digit security PIN to access the admin panel.</div>
+    <div class="pin-container">
+      <input class="pin-digit" type="password" maxlength="1" id="apg1" oninput="moveAdminPIN(this,null,'apg2')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">
+      <input class="pin-digit" type="password" maxlength="1" id="apg2" oninput="moveAdminPIN(this,'apg1','apg3')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">
+      <input class="pin-digit" type="password" maxlength="1" id="apg3" oninput="moveAdminPIN(this,'apg2','apg4')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">
+      <input class="pin-digit" type="password" maxlength="1" id="apg4" oninput="moveAdminPIN(this,'apg3',null)" onkeyup="checkAdminPINDone()" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">
+    </div>
+    <div class="pin-gate-error" id="adminPINError"></div>
+    <button class="btn btn-primary" onclick="verifyAdminPIN()" style="margin-top:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25)">Verify PIN →</button>
+    <div class="pin-gate-hint" onclick="handleLogout()">Not you? Sign out</div>
+  </div>
+</div>
+
+<!-- ══ TERMS & CONDITIONS – USER VIEW ══ -->
+<div class="screen" id="termsScreen">
+  <div class="navbar light" style="padding-top:42px"><button class="nav-back" onclick="goBack()">←</button><div class="nav-title">Terms & Conditions</div><div style="width:37px"></div></div>
+  <div style="padding:12px 0 20px">
+    <div class="terms-last-updated" id="termsLastUpdated"></div>
+    <div class="terms-content" id="termsContent">
+      <div class="loading-spinner" style="margin:30px auto"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN TERMS EDITOR ══ -->
+<div class="screen" id="adminTerms">
+  <div class="navbar light" style="padding-top:42px"><button class="nav-back" onclick="goBack()">←</button><div class="nav-title">Terms & Conditions</div><div style="width:37px"></div></div>
+  <div class="terms-editor-wrap">
+    <div style="background:#EEF2FF;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:#3730A3;line-height:1.5">
+      ✏️ Write or update your Terms & Conditions below. Changes are instantly visible to all users.
+    </div>
+    <textarea class="terms-editor" id="adminTermsEditor" placeholder="Write your Terms & Conditions here...&#10;&#10;1. Introduction&#10;Welcome to KOBOrush..."></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary" onclick="saveTerms()" style="flex:1">💾 Save & Publish</button>
+      <button class="btn btn-outline" onclick="previewTerms()" style="flex:1">👁 Preview</button>
+    </div>
+    <div id="termsSaveStatus" style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px;min-height:16px"></div>
+  </div>
+</div>
+
+<!-- ══ ADMIN SECURITY – PIN MANAGEMENT ══ -->
+<div class="screen" id="adminSecurity">
+  <div class="navbar light" style="padding-top:42px"><button class="nav-back" onclick="goBack()">←</button><div class="nav-title">Admin Security</div><div style="width:37px"></div></div>
+  <div style="padding:12px">
+    <div class="card" style="margin-bottom:12px">
+      <div class="section-title">Change Admin PIN</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5">This 4-digit PIN is required every time you log in to the admin panel as an extra security layer.</p>
+      <div class="form-group">
+        <label class="form-label">Current PIN</label>
+        <div class="input-icon-wrap">
+          <input type="password" class="form-input" id="currentAdminPIN" placeholder="Enter current PIN" maxlength="4" inputmode="numeric">
+          <button class="toggle-pw" onclick="togglePw('currentAdminPIN',this)">👁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">New PIN</label>
+        <div class="input-icon-wrap">
+          <input type="password" class="form-input" id="newAdminPIN" placeholder="Enter new 4-digit PIN" maxlength="4" inputmode="numeric">
+          <button class="toggle-pw" onclick="togglePw('newAdminPIN',this)">👁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm New PIN</label>
+        <div class="input-icon-wrap">
+          <input type="password" class="form-input" id="confirmAdminPIN" placeholder="Repeat new PIN" maxlength="4" inputmode="numeric">
+          <button class="toggle-pw" onclick="togglePw('confirmAdminPIN',this)">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="changeAdminPIN()">🔐 Update Security PIN</button>
+    </div>
+    <div class="card" style="background:#FEF2F2">
+      <div class="section-title" style="color:var(--danger)">Security Note</div>
+      <p style="font-size:12px;color:var(--text2);line-height:1.5">Keep your admin PIN private. It is stored securely and cannot be recovered if forgotten — you would need to reset it via the database. Default PIN is <strong>1990</strong>.</p>
     </div>
   </div>
 </div>
@@ -1266,7 +1374,7 @@ const db=getFirestore(app);
 const storage=fbStorage(app);
 const ADMIN='oladejiridwanopeyemi@gmail.com';
 
-window._s={user:null,userData:null,isAdmin:false,balHidden:false,navHist:[],pendingData:null,selProv:{},selPlan:null,allTx:[],allUsers:[],allFundReqs:[],proofFile:null,proofDataURL:null,fundStep:1};
+window._s={user:null,userData:null,isAdmin:false,balHidden:false,navHist:[],pendingData:null,selProv:{},selPlan:null,allTx:[],allUsers:[],allFundReqs:[],proofFile:null,proofDataURL:null,fundStep:1,adminPINVerified:false};
 
 // UTILS
 window.showToast=(t,m)=>{const c=document.getElementById('toastContainer');const el=document.createElement('div');el.className=`toast ${t}`;el.innerHTML=`<span>${t==='success'?'✅':t==='error'?'❌':'ℹ️'}</span><span>${m}</span>`;c.appendChild(el);setTimeout(()=>el.remove(),3500)};
@@ -1297,6 +1405,9 @@ window.navigateTo=(id)=>{
   if(id==='adminFundingRequests')loadFundingRequests('pending');
   if(id==='fundWallet')resetFundWallet();
   if(id==='adminAPIs')setTimeout(attachAutoSave,200);
+  if(id==='termsScreen')loadTermsForUser();
+  if(id==='adminTerms')loadAdminTermsEditor();
+  if(id==='adminSecurity'){}
   updateNav(id);
 };
 window.goBack=()=>{const cur=document.querySelector('.screen.active');if(cur)cur.classList.remove('active');const prev=_s.navHist.pop()||'home';const el=document.getElementById(prev);if(el)el.classList.add('active');updateNav(prev)};
@@ -1406,7 +1517,10 @@ onAuthStateChanged(auth,async(user)=>{
     document.getElementById('bottomNav').style.display='flex';
     if(_s.isAdmin){
       document.getElementById('bottomNav').style.display='none';
-      showScreen('admin');loadAdminDash();listenPendingFundRequests();
+      // Show PIN gate before admin dashboard
+      _s.adminPINVerified=false;
+      showScreen('adminPINGate');
+      setTimeout(()=>document.getElementById('apg1')?.focus(),400);
     }else{
       document.getElementById('bottomNav').style.display='flex';
       showScreen('home');loadHome();
@@ -1894,6 +2008,118 @@ window.showWithdrawSheet=()=>showOverlay(`<div class="sheet-title">Withdraw Fund
 window.submitWithdrawal=async()=>{const am=parseFloat(document.getElementById('wdAmt').value);const bk=document.getElementById('wdBank').value;const ac=document.getElementById('wdAcct').value;const nm=document.getElementById('wdName').value;if(!am||am<500||!ac||!nm)return showToast('error','Fill all fields');if(am>_s.userData?.balance)return showToast('error','Insufficient balance');try{await addDoc(collection(db,'withdrawalRequests'),{userId:_s.user.uid,email:_s.userData?.email,amount:am,bank:bk,accountNumber:ac,accountName:nm,status:'pending',createdAt:serverTimestamp()});await updateDoc(doc(db,'users',_s.user.uid),{balance:increment(-am),pendingBalance:increment(am)});await addNotif(_s.user.uid,'💸 Withdrawal Requested',`₦${am.toLocaleString()} pending admin approval.`,'info');showToast('success','Request submitted!');closeOverlay()}catch(e){showToast('error','Failed')}};
 
 // ADMIN
+// ══ ADMIN PIN GATE ══
+const DEFAULT_ADMIN_PIN = '1990';
+async function getAdminPIN(){
+  try{
+    const snap=await getDoc(doc(db,'settings','adminPIN'));
+    if(snap.exists()&&snap.data().pin)return snap.data().pin;
+  }catch(e){}
+  return DEFAULT_ADMIN_PIN;
+}
+window.moveAdminPIN=(el,prevId,nextId)=>{
+  if(el.value&&nextId)document.getElementById(nextId).focus();
+  if(!el.value&&prevId)document.getElementById(prevId).focus();
+  document.getElementById('adminPINError').textContent='';
+};
+window.checkAdminPINDone=()=>{
+  const pin=['apg1','apg2','apg3','apg4'].map(id=>document.getElementById(id).value).join('');
+  if(pin.length===4)verifyAdminPIN();
+};
+window.verifyAdminPIN=async()=>{
+  const pin=['apg1','apg2','apg3','apg4'].map(id=>document.getElementById(id).value).join('');
+  if(pin.length<4){document.getElementById('adminPINError').textContent='Enter all 4 digits';return;}
+  const correct=await getAdminPIN();
+  if(pin===correct){
+    _s.adminPINVerified=true;
+    ['apg1','apg2','apg3','apg4'].forEach(id=>document.getElementById(id).value='');
+    showScreen('admin');loadAdminDash();listenPendingFundRequests();
+  }else{
+    document.getElementById('adminPINError').textContent='Incorrect PIN. Try again.';
+    ['apg1','apg2','apg3','apg4'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('apg1').focus();
+    // shake effect
+    const wrap=document.querySelector('.pin-gate-wrap .pin-container');
+    if(wrap){wrap.style.animation='none';setTimeout(()=>{wrap.style.animation='shake .4s ease';},10);}
+  }
+};
+window.changeAdminPIN=async()=>{
+  const cur=document.getElementById('currentAdminPIN').value.trim();
+  const nw=document.getElementById('newAdminPIN').value.trim();
+  const cf=document.getElementById('confirmAdminPIN').value.trim();
+  if(!cur||!nw||!cf)return showToast('error','Fill all fields');
+  if(!/^\d{4}$/.test(nw))return showToast('error','PIN must be exactly 4 digits');
+  if(nw!==cf)return showToast('error','New PINs do not match');
+  const correct=await getAdminPIN();
+  if(cur!==correct)return showToast('error','Current PIN is incorrect');
+  try{
+    await setDoc(doc(db,'settings','adminPIN'),{pin:nw,updatedAt:serverTimestamp()});
+    showToast('success','Security PIN updated successfully!');
+    document.getElementById('currentAdminPIN').value='';
+    document.getElementById('newAdminPIN').value='';
+    document.getElementById('confirmAdminPIN').value='';
+  }catch(e){showToast('error','Failed to update PIN');}
+};
+
+// ══ TERMS & CONDITIONS ══
+async function loadTermsForUser(){
+  const content=document.getElementById('termsContent');
+  const lastUpd=document.getElementById('termsLastUpdated');
+  if(!content)return;
+  content.innerHTML='<div class="loading-spinner" style="margin:30px auto"></div>';
+  try{
+    const snap=await getDoc(doc(db,'settings','terms'));
+    if(snap.exists()&&snap.data().content){
+      content.textContent=snap.data().content;
+      if(snap.data().updatedAt?.toDate){
+        const d=snap.data().updatedAt.toDate();
+        lastUpd.textContent='Last updated: '+d.toLocaleDateString('en-NG',{day:'numeric',month:'long',year:'numeric'});
+      }
+    }else{
+      content.innerHTML='<div class="empty-state"><div class="empty-icon">📄</div><h4>Terms not yet published</h4><p>Please check back later.</p></div>';
+    }
+  }catch(e){
+    content.innerHTML='<div class="empty-state"><div class="empty-icon">📄</div><h4>Unable to load</h4><p>Please try again.</p></div>';
+  }
+}
+async function loadAdminTermsEditor(){
+  const editor=document.getElementById('adminTermsEditor');
+  const status=document.getElementById('termsSaveStatus');
+  if(!editor)return;
+  editor.value='';status.textContent='Loading…';
+  try{
+    const snap=await getDoc(doc(db,'settings','terms'));
+    if(snap.exists()&&snap.data().content){
+      editor.value=snap.data().content;
+      if(snap.data().updatedAt?.toDate){
+        const d=snap.data().updatedAt.toDate();
+        status.textContent='Last saved: '+d.toLocaleDateString('en-NG',{day:'numeric',month:'long',year:'numeric'});
+      }else{status.textContent='';}
+    }else{status.textContent='No terms saved yet.';}
+  }catch(e){status.textContent='Could not load.';}
+}
+window.saveTerms=async()=>{
+  const editor=document.getElementById('adminTermsEditor');
+  const status=document.getElementById('termsSaveStatus');
+  const text=editor.value.trim();
+  if(!text)return showToast('error','Terms content cannot be empty');
+  status.textContent='Saving…';
+  try{
+    await setDoc(doc(db,'settings','terms'),{content:text,updatedAt:serverTimestamp()});
+    showToast('success','Terms published successfully!');
+    status.textContent='Saved just now ✓';
+  }catch(e){showToast('error','Failed to save');status.textContent='Error saving.';}
+};
+window.previewTerms=()=>{
+  const text=document.getElementById('adminTermsEditor').value.trim();
+  if(!text)return showToast('info','Nothing to preview yet');
+  const content=document.getElementById('termsContent');
+  const lastUpd=document.getElementById('termsLastUpdated');
+  if(content){content.textContent=text;}
+  if(lastUpd){lastUpd.textContent='Preview (not yet saved)';}
+  navigateTo('termsScreen');
+};
+
 async function loadAdminDash(){
   if(!_s.isAdmin)return;
   try{
