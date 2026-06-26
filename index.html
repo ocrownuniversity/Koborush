@@ -1286,7 +1286,7 @@ window.navigateTo=(id)=>{
   const nxt=document.getElementById(id);if(nxt)nxt.classList.add('active');
   if(id==='historyScreen')loadHist();
   if(id==='notifications')loadNotifs();
-  if(id==='walletScreen')loadWallet();
+  if(id==='walletScreen'){if(_s.user&&!window._walletListenerStarted){window._walletListenerStarted=true;listenUD(_s.user.uid);}loadWallet();}
   if(id==='adminUsers')loadAdminUsers();
   if(id==='adminTransactions')loadAdminTxs();
   if(id==='adminAPIs'){loadAPISettings();loadCompanyAcct()}
@@ -1300,7 +1300,7 @@ window.navigateTo=(id)=>{
   updateNav(id);
 };
 window.goBack=()=>{const cur=document.querySelector('.screen.active');if(cur)cur.classList.remove('active');const prev=_s.navHist.pop()||'home';const el=document.getElementById(prev);if(el)el.classList.add('active');updateNav(prev)};
-window.switchTab=(id,el)=>{_s.navHist=[];const cur=document.querySelector('.screen.active');if(cur)cur.classList.remove('active');document.getElementById(id).classList.add('active');updateNav(id);if(id==='historyScreen')loadHist();if(id==='walletScreen')loadWallet();if(id==='servicesScreen')populateProviders()};
+window.switchTab=(id,el)=>{_s.navHist=[];const cur=document.querySelector('.screen.active');if(cur)cur.classList.remove('active');document.getElementById(id).classList.add('active');updateNav(id);if(id==='historyScreen')loadHist();if(id==='walletScreen'){if(_s.user&&!window._walletListenerStarted){window._walletListenerStarted=true;listenUD(_s.user.uid);}loadWallet();}if(id==='servicesScreen')populateProviders()};
 function updateNav(id){document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.screen===id))}
 function showScreen(id){if(window._splashTimer)clearTimeout(window._splashTimer);document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active')}
 
@@ -1494,7 +1494,61 @@ function txHTML(tx){
   const s=csym(_s.userData?.country||'NG');
   return`<div class="tx-item"><div class="tx-icon" style="background:${bg[tx.type]||'#F8FAFC'}">${icons[tx.type]||'💳'}</div><div class="tx-info"><div class="tx-name">${tx.description||tx.type}</div><div class="tx-meta">${tAgo(tx.createdAt)} · <span class="badge badge-${tx.status==='success'?'success':tx.status==='pending'?'pending':tx.status==='review'?'review':'failed'}">${tx.status}</span></div></div><div class="tx-amt"><div class="tx-amt-val ${ic?'cr':'dr'}">${ic?'+':'-'}${fmt(tx.amount,s)}</div></div></div>`;
 }
-async function loadWallet(){updateUI();const el=document.getElementById('walletTx');el.innerHTML='<div class="loading-spinner"></div>';try{const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),limit(10));const s=await getDocs(q);const txs=s.docs.map(d=>d.data()).sort((a,b)=>{const ta=a.createdAt?.toMillis?a.createdAt.toMillis():0;const tb=b.createdAt?.toMillis?b.createdAt.toMillis():0;return tb-ta;});el.innerHTML=txs.length?txs.map(d=>txHTML(d)).join(''):'<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>No transactions yet</p></div>';}catch(e){el.innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>Error loading transactions</p></div>';}};
+async function loadWallet(){
+  // Ensure latest user data is loaded before updating UI
+  if(_s.user){
+    try{const snap=await getDoc(doc(db,'users',_s.user.uid));if(snap.exists())_s.userData=snap.data();}catch(e){}
+  }
+  updateUI();
+  const el=document.getElementById('walletTx');el.innerHTML='<div class="loading-spinner"></div>';
+  try{
+    const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),limit(10));
+    const s=await getDocs(q);
+    const txs=s.docs.map(d=>d.data()).sort((a,b)=>{const ta=a.createdAt?.toMillis?a.createdAt.toMillis():0;const tb=b.createdAt?.toMillis?b.createdAt.toMillis():0;return tb-ta;});
+    el.innerHTML=txs.length?txs.map(d=>txHTML(d)).join(''):'<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>No transactions yet</p></div>';
+  }catch(e){el.innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-icon">📋</div><p>Error loading transactions</p></div>';}
+}
+
+// ── HISTORY SCREEN ──
+async function loadHist(filter='all'){
+  const c=document.getElementById('histList');
+  if(!c)return;
+  c.innerHTML='<div class="loading-spinner"></div>';
+  if(!_s.user){c.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><h4>Not logged in</h4></div>';return;}
+  try{
+    // Load transactions
+    let txSnap;
+    try{
+      const q=query(collection(db,'transactions'),where('userId','==',_s.user.uid),orderBy('createdAt','desc'),limit(50));
+      txSnap=await Promise.race([getDocs(q),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))]);
+    }catch(idxErr){
+      const q2=query(collection(db,'transactions'),where('userId','==',_s.user.uid),limit(50));
+      txSnap=await getDocs(q2);
+    }
+    let txs=txSnap.docs.map(d=>d.data()).sort((a,b)=>{const ta=a.createdAt?.toMillis?a.createdAt.toMillis():0;const tb=b.createdAt?.toMillis?b.createdAt.toMillis():0;return tb-ta;});
+    // Also pull funding requests and merge
+    try{
+      const fq=query(collection(db,'fundingRequests'),where('userId','==',_s.user.uid),limit(20));
+      const fs=await getDocs(fq);
+      const fundTxs=fs.docs.map(d=>{const r=d.data();return{type:'fund',status:r.status,amount:r.amount,description:'Manual Funding – '+r.status.charAt(0).toUpperCase()+r.status.slice(1),createdAt:r.createdAt};});
+      // Merge and deduplicate (avoid showing fund tx if already in transactions)
+      txs=[...txs,...fundTxs].sort((a,b)=>{const ta=a.createdAt?.toMillis?a.createdAt.toMillis():0;const tb=b.createdAt?.toMillis?b.createdAt.toMillis():0;return tb-ta;});
+    }catch(e2){}
+    // Apply filter
+    _s.allTx=txs;
+    const filtered=filter==='all'?txs:txs.filter(t=>t.type===filter||(filter==='fund'&&(t.type==='fund'||t.type==='fund_approved')));
+    if(!filtered.length){c.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><h4>No transactions</h4><p>'+(filter==='all'?'Your transactions will appear here':'No '+filter+' transactions')+' </p></div>';return;}
+    c.innerHTML=filtered.map(tx=>txHTML(tx)).join('');
+  }catch(e){
+    c.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><h4>Could not load history</h4><p style="font-size:11px;color:var(--text3)">'+e.message+'</p></div>';
+    console.error('loadHist:',e);
+  }
+}
+window.filterHist=(filter,el)=>{
+  document.querySelectorAll('#histFilter .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  loadHist(filter);
+};
 async function checkPaystackKey(){const el=document.getElementById('paystackKeyStatus');if(!el)return;if(window._paystackKey&&window._paystackKey.startsWith('pk_')){el.innerHTML='<span style="color:var(--success-green)">✅ Paystack gateway ready</span>';return;}try{const snap=await getDoc(doc(db,'settings','apis'));const a=snap.exists()?snap.data():{};const key=a.paystackPub||a.paystackPublic||'';if(key&&key.startsWith('pk_')){window._paystackKey=key;el.innerHTML='<span style="color:var(--success-green)">✅ Paystack gateway ready</span>';}else{el.innerHTML='<span style="color:var(--danger)">⚠ Paystack key not set. Admin → API Management</span>';}}catch(e){el.innerHTML='<span style="color:var(--danger)">Gateway error</span>';}}
 window.initPaystackPayment=async()=>{const amount=parseFloat(document.getElementById('paystackAmount').value)||0;if(amount<100)return showToast('error','Minimum ₦100');if(!window._paystackKey||!window._paystackKey.startsWith('pk_')){await checkPaystackKey();}if(!window._paystackKey||!window._paystackKey.startsWith('pk_')){return showToast('error','Paystack not set up. Use Manual Transfer or contact admin.');}const email=_s.userData?.email;if(!email)return showToast('error','Please log in again');const ref='KBR'+Date.now()+genId(6);if(!window.PaystackPop){try{await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://js.paystack.co/v1/inline.js';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});}catch(e){return showToast('error','Could not load Paystack. Check internet.');}}const onSuccess=async(reference)=>{showToast('info','Processing payment...');try{await updateDoc(doc(db,'users',_s.user.uid),{balance:increment(amount),totalFunded:increment(amount)});const txId=genId(12);await setDoc(doc(db,'transactions',txId),{id:txId,userId:_s.user.uid,type:'fund_approved',status:'success',amount,description:'Wallet Funded via Paystack',reference:reference,createdAt:serverTimestamp()});addNotif(_s.user.uid,'✅ Wallet Funded!','₦'+amount.toLocaleString()+' via Paystack','success').catch(()=>{});showToast('success','₦'+amount.toLocaleString()+' added to your wallet!');navigateTo('home');}catch(e){showToast('error','Payment done but credit failed. Ref: '+reference);}};try{const handler=window.PaystackPop.setup({key:window._paystackKey,email,amount:Math.round(amount*100),currency:'NGN',ref,channels:['card','bank','ussd','qr','mobile_money','bank_transfer'],callback:(resp)=>{onSuccess(resp.reference||ref);},onClose:()=>{showToast('info','Payment window closed');}});handler.openIframe();}catch(e){showToast('error','Paystack error: '+e.message);console.error(e);}};
 
@@ -1514,9 +1568,11 @@ window.goToFundStep2=()=>{
   document.getElementById('fundStep1').classList.add('hidden');
   document.getElementById('fundStep2').classList.remove('hidden');
   _s.fundStep=2;
-  // Show amount in step 2 header
-  const el=document.getElementById('fundStep2AmtLabel');
-  if(el)el.textContent='₦'+amount.toLocaleString();
+  // Show amount in step 2 display elements
+  const dispAmt=document.getElementById('fundDisplayAmount');
+  if(dispAmt)dispAmt.textContent='₦'+amount.toLocaleString();
+  const coAmt=document.getElementById('companyAmount');
+  if(coAmt)coAmt.textContent='₦'+amount.toLocaleString();
 };
 
 window.handleFileSelect=(input)=>{
@@ -1530,6 +1586,9 @@ window.handleFileSelect=(input)=>{
     const preview=document.getElementById('uploadPreview');
     if(file.type.startsWith('image/')){preview.src=e.target.result;preview.style.display='block'}
     const fn=document.getElementById('uploadFileName');fn.textContent=`✅ ${file.name}`;fn.style.display='block';
+    // Enable submit button once proof is selected
+    const sb=document.getElementById('submitProofBtn');
+    if(sb){sb.disabled=false;sb.innerHTML='Submit for Verification →';}
   };reader.readAsDataURL(file);
 };
 
